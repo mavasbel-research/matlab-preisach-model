@@ -13,12 +13,14 @@ preisachRelayModel.resetRelaysOff();
 initialRelays = preisachRelayModel.relays;
 inputMin = xyGrid(1);
 inputMax = xyGrid(end);
+inputAmp = dataHandler.inputAmp;
 outputMin = dataHandler.outputMin;
 outputMax = dataHandler.outputMax;
-inputFactor = 1.5;
-outputFactor = 1.5;
+outputAmp = dataHandler.outputAmp;
+inputFactor = 0.25;
+outputFactor = 0.75;
 simTotalTime = 300;
-initialInput = -0.5*dataHandler.inputAmp + dataHandler.inputOffset;
+initialInput = 0.0*dataHandler.inputAmp + dataHandler.inputOffset;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Time steps

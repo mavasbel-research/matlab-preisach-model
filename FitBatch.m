@@ -42,7 +42,7 @@ for fhCount=1:length(fitFileHandlers)
     fitFileHandlers(fhCount).printInfo();
     dataHandler = fitFileHandlers(fhCount).getDataHandler();
 
-    run('./PreisachRelayFit');
+    run('./FitModel');
 %     saveas(preisachPlots.loopPlaneFig  , strcat(cd, "\Fitting results\LoopPlane-"  , fitFileHandlers(fhCount).fileName, ".png") );
 %     saveas(preisachPlots.inputOutputFig, strcat(cd, "\Fitting results\InputOutput-", fitFileHandlers(fhCount).fileName, ".png") );
 end

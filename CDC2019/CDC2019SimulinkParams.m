@@ -1,7 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create parameters
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 props = string(properties(preisachRelayModel));
 for i = 1:length(props)
     propName = char(props(i,:));
@@ -14,8 +13,10 @@ preisachRelayModel.resetRelaysOn();
 initialRelays = preisachRelayModel.relays;
 inputMin = xyGrid(1);
 inputMax = xyGrid(end);
+inputAmp = dataHandler.inputAmp;
 outputMin = dataHandler.outputMin;
 outputMax = dataHandler.outputMax;
+outputAmp = dataHandler.outputAmp;
 inputFactor = 1.5;
 outputFactor = 1.5;
 simTotalTime = 10;

@@ -2,6 +2,9 @@ clear all
 close all
 clc
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Input params
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 inputMin = -1;
 inputMax = 1;
 gridDen = 300;
@@ -22,9 +25,9 @@ weightFunc = zeros(gridDen, gridDen);
 for i=1:length(xVals)
     for j=1:length(yVals)
         if(gridY(i,j)>=-gridX(i,j)) 
-            weightFunc(i,j) = 1/4;
+            weightFunc(i,j) = 1;
         else
-            weightFunc(i,j) = 1/4;
+            weightFunc(i,j) = -1;
         end
     end
 end
@@ -53,7 +56,7 @@ inputSeq = [linspace(inputMin, inputMax, sampleLength), ...
     linspace(inputMax, inputMin, sampleLength)]';
 outputSeq = preisachUtils.generateOutputSeq(inputSeq);
 dataHandler = DataHandler(inputSeq, outputSeq);
-preisachRelayModel.offset = dataHandler.outputOffset;
+preisachRelayModel.offset = -dataHandler.outputOffset;
 [outputSeq, relaysSeq] = preisachUtils.generateOutputSeq(inputSeq);
 dataHandler = DataHandler(inputSeq, outputSeq);
 
@@ -69,7 +72,7 @@ dataPlotter.plotWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.xyG
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Creating parameters for simulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%run('./SimulinkParams');
+%run('./CreateSimulinkParams');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add rectangles
