@@ -7,8 +7,8 @@ clc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 inputMin = -3;
 inputMax = 1;
-gridDen = 400;
-sampleLength = 400;
+gridDen = 10;
+sampleLength = 10;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Create weighting function
@@ -18,7 +18,7 @@ yVals = linspace(inputMin, inputMax, gridDen);
 [gridX, gridY] = meshgrid(xVals,yVals);
 
 % Journal function:
-% z = (sin(2*pi*(gridY-gridX))) + (sin(2*pi*(gridX+gridY)));
+% weightFunc = (sin(2*pi*(gridY-gridX))) + (sin(2*pi*(gridX+gridY)));
 
 % Piecewise continuous symmetric weighting function
 % weightFunc = zeros(gridDen, gridDen);
