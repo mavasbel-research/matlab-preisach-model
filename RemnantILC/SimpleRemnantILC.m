@@ -9,12 +9,12 @@ triagAmp = 1.0;
 pulseAmpMax = 1;
 pulseAmpMin = 0.5;
 inputSamples = 400;
-errorThreshold = 0.0025;
+errorThreshold = 0.0015;
 iterationLimit = 30;
 
 % Control objective and initial pulse amp
 % Remnant max reachable: -0.33, Remnant min reachable: -0.83531
-ref = max([min([-0.4, ...
+ref = max([min([-0.7, ...
                 -0.33]),-0.83531]);
 pulseAmp = max([min([1, ...
                 pulseAmpMax]),pulseAmpMin]);
@@ -32,13 +32,12 @@ pulses = [];
 remnants = [];
 errors = [];
 iteration = 0;
-preisachRelayModel.resetRelaysOn();
+baseModel.resetRelaysOn();
 fig = figure;
 plotHandler = plot(0, ref, 'ro', 'markersize', 4);
 xlim([-1.2 1.2]);
 ylim([-1.0 0.8]);
 lineHandler = animatedline(gca);
-colorMap = 0.97*rand(iterationLimit, 3);
 
 % Video initialization
 % videoWriter = VideoWriter(videoName);
@@ -55,11 +54,11 @@ while(true)
     % Generate input signal
     [input, times] = generateInputSignal(triagAmp, pulseAmp, inputSamples);
     output = zeros(inputSamples, 1);
-    lineHandler = animatedline(gca, 'Color', colorMap(iteration, :));
+    lineHandler = animatedline(gca, 'Color', 0.7*rand(1, 3)+[0.1, 0.1, 0.1]);
     for i=1:inputSamples
         % Apply input value
-        preisachRelayModel.updateRelays(input(i));
-        output(i) = preisachRelayModel.getOutput();
+        baseModel.updateRelays(input(i));
+        output(i) = baseModel.getOutput();
         addpoints(lineHandler, input(i), output(i));
         drawnow limitrate;
         % Write video
@@ -95,7 +94,7 @@ while(true)
 %     L1 = (1+lambda*K1)^(-1);
 %     deltaPulseAmp = output(end)-lambda*pulseAmp;
 %     constant = pulseAmp + deltaPulseAmp/lambda + (K0+K1*L1*L0)*error;
-%     pulseAmp = pulseAmpNextByIter(preisachRelayModel, triagAmp, ...
+%     pulseAmp = pulseAmpNextByIter(baseModel, triagAmp, ...
 %                                 lambda, constant, ...
 %                                 pulseAmp, pulseAmpMin, pulseAmpMax);
     pulseAmp = pulseAmp + K0*error;
@@ -124,25 +123,25 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function to generate Phi from existing PreisachRelaysModel
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function output = Phi(preisachRelayModel, triagAmp, pulseAmp)
-    relays = preisachRelayModel.relays;
-    preisachRelayModel.resetRelaysOff();
-    preisachRelayModel.updateRelays(-triagAmp);
-    preisachRelayModel.updateRelays(pulseAmp);
-    preisachRelayModel.updateRelays(0);
-    output = preisachRelayModel.getOutput();
-    preisachRelayModel.relays= relays;
+function output = Phi(baseModel, triagAmp, pulseAmp)
+    relays = baseModel.relays;
+    baseModel.resetRelaysOff();
+    baseModel.updateRelays(-triagAmp);
+    baseModel.updateRelays(pulseAmp);
+    baseModel.updateRelays(0);
+    output = baseModel.getOutput();
+    baseModel.relays= relays;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function to generate PulseAmpNext from iteration of deltaPulseAmp
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function pulseAmp = pulseAmpNextByIter(preisachRelayModel, triagAmp,...
+function pulseAmp = pulseAmpNextByIter(baseModel, triagAmp,...
                                 lambda, constant, ...
                                 pulseAmp, pulseAmpMin, pulseAmpMax)
     diffPrev = inf;
     while(true)
-        deltaPulseAmpNext = Phi(preisachRelayModel, triagAmp, pulseAmp)...
+        deltaPulseAmpNext = Phi(baseModel, triagAmp, pulseAmp)...
                                 - lambda*pulseAmp;
         pulseAmpNext = max([min([-deltaPulseAmpNext/lambda + constant, ...
                             pulseAmpMax]), pulseAmpMin]);
