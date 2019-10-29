@@ -115,9 +115,9 @@ DataPlotter.plotWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.inp
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add rectangles
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% linePoints = 350;
-% maxZ = max(max(weightFunc));
-% 
+linePoints = 350;
+maxZ = max(max(weightFunc));
+ 
 % inputCross= 0;
 % plotRectangle([inputMin, inputCross;
 %     inputCross, inputCross;
