@@ -2,20 +2,32 @@ close all
 clc
 
 % Model parameters
-totalPreisachs = 1;
-couplingFactor = 0.5;
-resetAmp = -1.0;
-pulseAmpMax = 1;
-pulseAmpMin = 0.5;
-reachableMax = -0.34;
-reachableMin = -0.83;
+% totalPreisachs = 3;
+% couplingFactor = 0.5;
+% resetAmp = -1.0;
+% pulseAmpMax = 1;
+% pulseAmpMin = 0.5;
+% reachableMax = -0.34;
+% reachableMin = -0.83;
+
+totalPreisachs = 3;
+couplingFactor = 0.50;
+resetAmp = inputMin;
+pulseAmpMax = inputMax;
+pulseAmpMin = 0;
+reachableMax = 400;
+reachableMin = -200;
+% reachableMin = 100;
 
 % Control objective and initial pulse amp
 refs = rand(1,totalPreisachs)*(reachableMax - reachableMin) + reachableMin;
 pulseAmps = rand(1,totalPreisachs)*(pulseAmpMax - pulseAmpMin) + pulseAmpMin;
+refs = [+140 70 +280];
+refs = [+220 100 +380];
+pulseAmps = 800*[1,1,1];
 
 % Control paremeters
-K0 = 0.70;
+K0 = 0.28;
 errorThreshold = 0.005;
 iterationsLimit = 30;
 inputSamples = 400;
@@ -26,6 +38,7 @@ selectedColor = [0.9 0 0];
 couplingColor = [0 0 0];
 errorColor = [0.75 0.75 0];
 doneColor = [0 0.75 0];
+iterLimitColor = [0.5 0.5 0];
 
 % Video name
 % videoName = 'video.avi';
@@ -46,6 +59,9 @@ pulseAmps = max(min(pulseAmps', pulseAmpMax), pulseAmpMin)';
 for j=1:totalPreisachs, preisachArray(j).resetRelaysOff(); end
 
 % Create axes for plots
+iterationInputLines = [];
+iterationResetLines = [];
+axesHandlers = [];
 fig = figure;
 fig.WindowState = 'maximized';
 axesHandlers = [];
@@ -53,6 +69,11 @@ for i=1:totalPreisachs
     axesHandler = subplot(1, totalPreisachs, i);
     xlim(axesHandler, [-1.2 1.2]);
     ylim(axesHandler, [-1.0 0.8]);
+    
+    % Axis for simulation with real data
+    xlim([inputMin-0.2*(inputMax-inputMin),inputMax+0.2*(inputMax-inputMin)]);
+    ylim([-1000 1500]);
+    
     grid(axesHandler, 'on');
     hold(axesHandler, 'on');
     plot(axesHandler, 0, refs(i), 'ro', 'markersize', 4);
@@ -64,11 +85,20 @@ end
 % open(videoWriter);
 
 % Create reset signal
-resetSignal = generateSignal(resetAmp, inputSamples);
+% resetSignal = generateSignal(resetAmp, inputSamples);
+resetSignal = generateResetSignal(-800, inputMax, inputSamples);
 
 % Start main loop
 iteration = 1;
-while(iteration<iterationsLimit)
+inputs = [];
+
+inputSeries = [];
+outputSeries = [];
+sortSeries = [];
+ampsSeries = [];
+finalOutputSeries = [];
+errorsSeries = [];
+while(true)
     % Print stats
     disp('-------------------------')
     disp(['Iteration: ', num2str(iteration)])
@@ -76,12 +106,11 @@ while(iteration<iterationsLimit)
     disp(['Ref:       ', num2str(refs, '   %+6.6f')])
     
     % Clear previous reset lines
-    if exist('iterationResetLines', 'var') && ~isempty(iterationResetLines)
+    if exist('iterationResetLines','var') && ~isempty(iterationResetLines)
         for j=1:length(iterationResetLines)
             clearpoints(iterationResetLines(j)); 
         end
     end
-    
     % Generate animated line handlers for reset and set xlabel
     iterationResetLines = [];
     for j=1:totalPreisachs
@@ -92,10 +121,13 @@ while(iteration<iterationsLimit)
     
     % Apply reset signal to Preisachs
     for i=1:inputSamples
+        inputSeries = cat(1,inputSeries,NaN(1,totalPreisachs));
+        outputSeries = cat(1,outputSeries,NaN(1,totalPreisachs));
         for j=1:totalPreisachs
+            inputSeries(end,j) = resetSignal(i);
             preisachArray(j).updateRelays(resetSignal(i));
-            output = preisachArray(j).getOutput();
-            addpoints(iterationResetLines(j), resetSignal(i), output)
+            outputSeries(end,j) = preisachArray(j).getOutput();
+            addpoints(iterationResetLines(j), resetSignal(i), outputSeries(end,j));
         end
         drawnow limitrate;
 %         frame = getframe(fig);
@@ -103,17 +135,22 @@ while(iteration<iterationsLimit)
     end
     
     % Clear previous input lines if exists
-    if exist('iterationInputLines', 'var') && ~isempty(iterationInputLines)
-        for j=1:size(iterationInputLines, 1), for jj=1:size(iterationInputLines, 2)
-            clearpoints(iterationInputLines(j,jj)); 
-        end, end
+    if exist('iterationInputLines','var') && ~isempty(iterationInputLines)
+        for j=1:size(iterationInputLines,1)
+            for jj=1:size(iterationInputLines,2)
+                clearpoints(iterationInputLines(j,jj));
+            end
+        end
         drawnow limitrate;
     end
     iterationInputLines = [];
     
     % Sort pulse amps and start application loop
-    [~, sortedPulseAmpsIdx] = sort(pulseAmps);
-    finalOutputs = NaN(1, totalPreisachs);
+    [~,sortedPulseAmpsIdx] = sort(pulseAmps);
+%     sortedPulseAmpsIdx = flip(sortedPulseAmpsIdx);
+    ampsSeries = cat(1,ampsSeries,pulseAmps);
+    sortSeries = cat(1,sortSeries,sortedPulseAmpsIdx);
+    finalOutputs = NaN(1,totalPreisachs);
     for j=sortedPulseAmpsIdx
         % Generate animated line handlers and set xlabel with
         % corresponding colors
@@ -134,33 +171,42 @@ while(iteration<iterationsLimit)
         end
         iterationInputLines = [iterationInputLines; inputLines];
         
-        % Generation and application of input signal with coupling effect
-        % to neightbours
-        inputSignal = generateSignal(pulseAmps(j), inputSamples);
+        % Generation and application and saving of input signal with 
+        % coupling effect to neightbours
+        inputSignal = generateSignal(pulseAmps(j),inputSamples);  
         for i=1:inputSamples
+            inputSeries = cat(1,inputSeries,NaN(1,totalPreisachs));
+            outputSeries = cat(1,outputSeries,NaN(1,totalPreisachs));
+        
+            inputSeries(end,j) = inputSignal(i);
             preisachArray(j).updateRelays(inputSignal(i));
-            output = preisachArray(j).getOutput();
-            addpoints(inputLines(j), inputSignal(i), output)
+            outputSeries(end,j) = preisachArray(j).getOutput();
+            addpoints(inputLines(j),inputSignal(i),outputSeries(end,j))
             
-            coupledInput = couplingFactor*inputSignal(i);
             for jj=1:totalPreisachs
                 if jj==j, continue, end
-                preisachArray(jj).updateRelays(coupledInput);
-                neightbourOutput = preisachArray(jj).getOutput();
-                addpoints(inputLines(jj), coupledInput, neightbourOutput);
+                inputSeries(end,jj) = couplingFactor*inputSignal(i);
+                preisachArray(jj).updateRelays(inputSeries(end,jj)); % This is the neightbour input
+                outputSeries(end,jj) = preisachArray(jj).getOutput(); % This is the neightbour output
+                addpoints(inputLines(jj),inputSeries(end,jj),outputSeries(end,jj));
             end
             
             drawnow limitrate;
 %             frame = getframe(fig);
 %             writeVideo(videoWriter, frame);
         end
-        finalOutputs(j) = output;
+        
+        finalOutputs(j) = outputSeries(end,j);
     end
     
     % Compute and print errors
     errors = (refs - finalOutputs);
     disp(['Remnant:   ', num2str(finalOutputs, '   %+6.6f')])
     disp(['Error:     ', num2str(errors, '   %+6.6f')])
+    
+    % Save for postprocessing
+    finalOutputSeries = cat(2,finalOutputSeries,finalOutputs);
+    errorsSeries = cat(2,errorsSeries,errors);
     
     % Update error labels
     for j=1:totalPreisachs
@@ -187,6 +233,17 @@ while(iteration<iterationsLimit)
         break
     end
     
+    if iteration>=iterationsLimit
+        for j=1:totalPreisachs
+            title(axesHandlers(j), 'Iteration limit', ...
+                'Color', iterLimitColor);
+        end
+        disp('-------------------------')
+        disp('Iteration limit achieved')
+        disp('-------------------------')
+        break
+    end
+    
     % Compute pulses amps for next iteration and update iteration counter
     pulseAmps = pulseAmps + K0*errors;
     pulseAmps = max(min(pulseAmps', pulseAmpMax), pulseAmpMin)';
@@ -202,6 +259,15 @@ end
 function [ampVals, timeVals] = generateSignal(amp, numSamples)
     timePoints = [0; 0.25; 0.5; 0.60];
     ampPoints = [0; amp; 0; 0];
+    timeVals = linspace(0, timePoints(end), numSamples);
+    ampVals = interp1(timePoints, ampPoints, timeVals);
+    timeVals = timeVals(:);
+    ampVals = ampVals(:);
+end
+
+function [ampVals, timeVals] = generateResetSignal(minAmp, maxAmp, numSamples)
+    timePoints = [0; 0.25; 0.5; 0.75; 1.0];
+    ampPoints = [0; maxAmp; 0; minAmp; 0];
     timeVals = linspace(0, timePoints(end), numSamples);
     ampVals = interp1(timePoints, ampPoints, timeVals);
     timeVals = timeVals(:);
