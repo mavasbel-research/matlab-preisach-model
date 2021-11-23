@@ -1,4 +1,4 @@
-close all;
+% close all;
 if (~exist('isBatch', 'var') || isBatch ~= true) clc; end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -9,24 +9,23 @@ dataHandler.resetOrigSequences();
 % dataHandler.trimFirstMaxLastMinInput();
 dataHandler.trimFirstSecondMaxInput();
 % dataHandler.trimSecondThirdMaxInput();
-dataHandler.interpSequence(401*8);
+dataHandler.interpSequence(401);
 dataHandler.printInfo();
 
 inputInterFact = -0.005;
 inputInter = abs(dataHandler.inputMax - dataHandler.inputMin);
 preisachRelayModel = PreisachRelayModel([dataHandler.inputMin-inputInter*inputInterFact, ...
-    dataHandler.inputMax+inputInter*inputInterFact], 400);
+    dataHandler.inputMax+inputInter*inputInterFact], 300);
 preisachRelayModel.printInfo();
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot originals
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fitPlotter = FitPlotter();
-fitPlotter.subfigInput(1:dataHandler.origSampleLength, dataHandler.origInputSeq, 'Original Input', 'r');
-fitPlotter.subfigInput(dataHandler.indexesSeq, dataHandler.inputSeq, 'Adjusted Input', 'b');
-fitPlotter.subfigOutput(1:dataHandler.origSampleLength, dataHandler.origOutputSeq, 'Original Output', 'r');
-fitPlotter.subfigOutput(dataHandler.indexesSeq, dataHandler.outputSeq, 'Adjusted Output', 'b');
-drawnow
+fitPlotter.subfigInput(1:dataHandler.origSampleLength, dataHandler.origInputSeq, 'Original Input', 'r'); drawnow;
+fitPlotter.subfigInput(dataHandler.indexesSeq, dataHandler.inputSeq, 'Adjusted Input', 'b'); drawnow;
+fitPlotter.subfigOutput(1:dataHandler.origSampleLength, dataHandler.origOutputSeq, 'Original Output', 'r'); drawnow;
+fitPlotter.subfigOutput(dataHandler.indexesSeq, dataHandler.outputSeq, 'Adjusted Output', 'b'); drawnow;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Fitting
@@ -48,14 +47,12 @@ fittedOutputTime = toc(fittedOutputTic);
 printFittingInfo(dataHandler, fittedOutputSeq(:), filterTime, fittingTime, weightFuncTime, fittedOutputTime);
 
 % Add fitted curve and weight plane
-fitPlotter.subfigOutput(dataHandler.indexesSeq, fittedOutputSeq, 'Fitted Output', 'k');
-fitPlotter.subfigLoop(dataHandler.inputSeq, dataHandler.outputSeq, 'Real data', 'r');
-fitPlotter.subfigLoop(dataHandler.inputSeq, fittedOutputSeq, 'Fitted result', 'b');
-fitPlotter.subfigWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.inputGrid);
-drawnow
-
-fitPlotter.figWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.inputGrid);
-drawnow
+fitPlotter.subfigOutput(dataHandler.indexesSeq, fittedOutputSeq, 'Fitted Output', 'k'); drawnow;
+fitPlotter.subfigLoop(dataHandler.inputSeq, dataHandler.outputSeq, 'Real data', 'r'); drawnow;
+fitPlotter.subfigLoop(dataHandler.inputSeq, fittedOutputSeq, 'Fitted result', 'b'); drawnow;
+fitPlotter.subfigWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.inputGrid); drawnow;
+% fitPlotter.figLoop(dataHandler.inputSeq, dataHandler.outputSeq, 'Original phase plot', 'r'); drawnow;
+% fitPlotter.figWeightFunc(preisachRelayModel.weightFunc, preisachRelayModel.inputGrid); drawnow;
 
 if (~exist('isBatch', 'var') || isBatch ~= true) run('./CreateSimulinkParams'); end
 
